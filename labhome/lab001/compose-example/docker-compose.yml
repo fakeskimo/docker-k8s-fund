@@ -1,0 +1,9 @@
+version: '3'
+services:
+  guestbook-python:
+    # image: "guestbook-python:v1"
+    build: .
+    ports:
+     - "8080:80"
+  guestbook-redis:
+    image: "redis:alpine"

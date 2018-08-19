@@ -1,0 +1,54 @@
+#!/bin/bash
+
+checkMinikube () {
+    kubectl config use-context minikube
+
+    while [ $? -ne 0 ]
+    do
+        echo "Waiting minikube configuration..."
+        wait 5
+        kubectl cluster-info
+    done
+}
+
+printHelp () {
+   echo "Please use corret option [restore|rebuild]" 
+   echo ""
+   echo "   labctl restore: Quick lab restore"
+   echo "   labctl rebuild: Complete lab rebuild" 
+}
+
+labPrep () {
+    if [ -d "$(pwd)/scripts" ]; then
+        for script in $(find $(pwd)/scripts/ -type f -name "*.sh"); do
+            bash "$script"
+        done
+    fi
+    
+    echo "minikube is ready!!"
+}
+
+labRestore () {
+    VBoxManage controlvm minikube poweroff 
+    VBoxManage snapshot minikube restore "init-status"
+    VBoxManage startvm minikube --type headless
+    checkMinikube
+    labPrep
+}
+
+labRebuild () {
+    minikube delete
+    minikube start --cpus 4 --memory 8192
+    checkMinikube
+    VBoxManage snapshot minikube take "init-status" \
+        --description "Just after start"
+    labPrep
+}
+
+if [ $1 == 'restore' ]; then
+    labRestore
+elif [ $1 == 'rebuild' ]; then
+    labRebuild
+else
+    printHelp
+fi
