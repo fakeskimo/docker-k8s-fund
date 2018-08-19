@@ -1,4 +1,8 @@
 
+ln -s ~/docker-k8s-fund/labhome ~/labhome
+sudo ln -s ~/labhome/bin/labctl /usr/local/bin/labctl
+
+
 curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && chmod +x minikube && sudo cp minikube /usr/local/bin/ && rm minikube
 
 
@@ -18,5 +22,5 @@ sudo apt-get install docker.io docker-compose vim
 echo 'eval "$(minikube completion bash)"' >> ~/.bashrc
 echo 'eval "$(kubectl completion bash)"' >> ~/.bashrc
 
-cp -r ./user-home/* ~/
+cp -r ~/labhome/bin/user-home/* ~/
 
