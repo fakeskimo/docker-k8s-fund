@@ -1,5 +1,8 @@
 #!/bin/bash
 
+cd ~/labhome/kube*
+vagrant destroy -f
+
 rm -rf ~/labhome
 ln -s ~/docker-k8s-fund/labhome ~/labhome
 
