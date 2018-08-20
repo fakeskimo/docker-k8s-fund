@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: wttr-rs
+  labels:
+    app: wttr-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: wttr-app
+  template:
+    metadata:
+      labels:
+        app: wttr-app
+    spec:
+      containers:
+      - name: wttr-frontend
+        image: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /usr/share/nginx/html
+          name: content-volume
+      - name: wttr-backend
+        image: radial/busyboxplus:curl
+        volumeMounts:
+        - mountPath: /mnt
+          name: content-volume
+        command: ["/bin/ash"]
+        args: ["-c", "echo '<!DOCTYPE html><html><body><h2>Current Weather</h2><img src=current-weather.png></body></html>' > /mnt/index.html; while true; do curl -H 'Accept-Language: ko' wttr.in/seoul.png --output /mnt/current-weather.png; sleep 30; echo $(date) - Weather Data Updated; done"]
+      volumes:
+      - name: content-volume
+        emptyDir: {}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: wttr-svc
+  labels:
+    app: wttr-app
+spec:
+  type: NodePort
+  selector:
+    app: wttr-app
+  ports:
+  - port: 8080
+    targetPort: 80
+

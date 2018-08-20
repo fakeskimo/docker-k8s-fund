@@ -6,8 +6,9 @@
 
 ### Kubernets Cluster
 
-실습을 위한 쿠버네티스 클러스터 구성 정보 확인
-Volume 명세서 예제 내용 확인 및 Pod 배포 연습
+- 실습을 위한 쿠버네티스 클러스터 구성 정보 확인
+
+- Volume 명세서 예제 내용 확인 및 Pod 배포 연습
 
 ```shell
 # LAB003 디렉토리로 이동
@@ -27,7 +28,8 @@ minikube is ready!!
 
 ### Volume
 
-Pod 내부 서로 다른 컨테이너에서 Volume 공유 확인
+- Pod 내부 서로 다른 컨테이너에서 Volume 공유 확인
+
 
 ```shell
 # LAB003, emptydir-example 디렉토리로 이동
@@ -114,9 +116,13 @@ Opening kubernetes service default/wttr-svc in default browser...
 
 ```
 
+
+
 wttr-svc 로 접근하면 아래와 같이 서울 날씨 정보를 볼 수 있습니다.
 
 ![1534715371038](assets/1534715371038.png)
+
+
 
 ```shell
 $ kubectl exec wttr-pod -c wttr-backend /bin/ash -i --tty
@@ -183,9 +189,10 @@ Containers:
 
 ### PV and PVC
 
-PV 및 PVC 명세서 예제 내용 확인 및 배포 연습
-외부 스토리지 서비스를 이용하는 PV 배포
-Pod 내 PVC 추가하여 PV 를 사용하는 서비스 배포
+- PV 및 PVC 명세서 예제 내용 확인 및 배포 연습
+
+- 외부 스토리지 서비스를 이용하는 PV 배포
+- Pod 내 PVC 추가하여 PV 를 사용하는 서비스 배포
 
 ```shell
 # LAB003 디렉토리로 이동
@@ -195,6 +202,7 @@ $ ls -l
 -rw-r--r-- 1 jhlee jhlee  104  8월 20 07:05 Dockerfile
 drwxr-xr-x 3 jhlee jhlee 4096  8월 20 07:05 app
 
+# docker cli 명령어가 localhost 가 아니라 minikube 안에 있는 docker 데몬을 바라보도록 환경 설정 변경
 $ eval $(minikube docker-env)
 
 $ docker build -t guestbook-python:v1 .
@@ -269,8 +277,197 @@ k8s.gcr.io/kubernetes-dashboard-amd64      v1.8.1              e94d2f21bc0c     
 gcr.io/k8s-minikube/storage-provisioner    v1.8.1              4689081edb10        9 months ago        80.8MB
 radial/busyboxplus                         curl                71fa7369f437        3 years ago         4.23MB
 
+$ docker images guestbook-python
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+guestbook-python    v1                  ece9e5c11a9e        24 seconds ago      71.6MB
+
+$ kubectl get sc
+NAME                 PROVISIONER                AGE
+standard (default)   k8s.io/minikube-hostpath   11h
+
+$ kubectl describe sc standard 
+Name:            standard
+IsDefaultClass:  Yes
+Annotations:     kubectl.kubernetes.io/last-applied-configuration={"apiVersion":"storage.k8s.io/v1","kind":"StorageClass","metadata":{"annotations":{"storageclass.beta.kubernetes.io/is-default-class":"true"},"labels":{"addonmanager.kubernetes.io/mode":"Reconcile"},"name":"standard","namespace":""},"provisioner":"k8s.io/minikube-hostpath"}
+,storageclass.beta.kubernetes.io/is-default-class=true
+Provisioner:           k8s.io/minikube-hostpath
+Parameters:            <none>
+AllowVolumeExpansion:  <unset>
+MountOptions:          <none>
+ReclaimPolicy:         Delete
+VolumeBindingMode:     Immediate
+Events:                <none>
+
+$ cat guestbook-pvc.yml 
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: guestbook-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: FileSystem
+  resources:
+    requests:
+      storage: 3Gi
+      
+
+$ cat guestbook-app.yml 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: guestbook-pod
+  labels:
+    app: guestbook-app
+spec:
+  containers:
+  - name: guestbook-python
+    image: guestbook-python:v1
+    ports:
+    - containerPort: 80
+  - name: guestbook-redis
+    image: redis:alpine
+    volumeMounts:
+    - mountPath: /data
+      name: redis-data
+  volumes:
+  - name: redis-data
+    persistentVolumeClaim:
+      claimName: guestbook-pvc
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: guestbook-svc
+  labels:
+    app: guestbook-app
+spec:
+  type: NodePort
+  selector:
+    app: guestbook-app
+  ports:
+  - port: 8080
+    targetPort: 80
+
+$ kubectl create -f ./
+pod/guestbook-pod created
+service/guestbook-svc created
+persistentvolumeclaim/guestbook-pvc created
+
+$ kubectl get pod,rs,pv,pvc,svc
+NAME                READY     STATUS    RESTARTS   AGE
+pod/guestbook-pod   2/2       Running   1          1m
+
+NAME                                                        CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS    CLAIM                   STORAGECLASS   REASON    AGE
+persistentvolume/pvc-4b2ea35a-a43e-11e8-b754-080027ef3e31   3Gi        RWO            Delete           Bound     default/guestbook-pvc   standard                 1m
+
+NAME                                  STATUS    VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+persistentvolumeclaim/guestbook-pvc   Bound     pvc-4b2ea35a-a43e-11e8-b754-080027ef3e31   3Gi        RWO            standard       1m
+
+NAME                    TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)          AGE
+service/guestbook-svc   NodePort    10.99.224.94   <none>        8080:32327/TCP   1m
+service/kubernetes      ClusterIP   10.96.0.1      <none>        443/TCP          11h
+
+$ minikube service list
+|-------------|----------------------|-----------------------------|
+|  NAMESPACE  |         NAME         |             URL             |
+|-------------|----------------------|-----------------------------|
+| default     | guestbook-svc        | http://192.168.99.100:32327 |
+| default     | kubernetes           | No node port                |
+| kube-system | kube-dns             | No node port                |
+| kube-system | kubernetes-dashboard | http://192.168.99.100:30000 |
+| kube-system | metrics-server       | No node port                |
+|-------------|----------------------|-----------------------------|
 
 
+```
+
+
+
+- guestbook-svc 서비스 URLhttp://192.168.99.100:32327/ 를 웹브라우저로 오픈 후 테스트 값 입력 후 저장
+
+![1534745263104](assets/1534745263104.png)
+
+
+
+```shell
+# LAB003 디렉토리로 이동
+$ cd ~/labhome/lab003/pv-example
+
+$ kubectl get pv
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS    CLAIM                   STORAGECLASS   REASON    AGE
+pvc-4b2ea35a-a43e-11e8-b754-080027ef3e31   3Gi        RWO            Delete           Bound     default/guestbook-pvc   standard                 12m
+
+
+$ minikube ssh
+                         _             _            
+            _         _ ( )           ( )           
+  ___ ___  (_)  ___  (_)| |/')  _   _ | |_      __  
+/' _ ` _ `\| |/' _ `\| || , <  ( ) ( )| '_`\  /'__`\
+| ( ) ( ) || || ( ) || || |\`\ | (_) || |_) )(  ___/
+(_) (_) (_)(_)(_) (_)(_)(_) (_)`\___/'(_,__/'`\____)
+
+# minikube /tmp 경로에 hostpath pv 디렉토리 확인
+$ ls /tmp/hostpath-provisioner/                                      
+pvc-4b2ea35a-a43e-11e8-b754-080027ef3e31
+
+# hostpath pv 경로 및에 redis 컨테이너에서 저장한 DB 파일 확인
+$ ls /tmp/hostpath-provisioner/pvc-4b2ea35a-a43e-11e8-b754-080027ef3e31/
+dump.rdb
+
+$ exit
+logout
+
+# dump.rdb 파일은 유지한 상태에서 guestbook 재배포
+$ kubectl get pods
+NAME            READY     STATUS    RESTARTS   AGE
+guestbook-pod   2/2       Running   1          17m
+
+$ kubectl delete pod guestbook-pod
+pod "guestbook-pod" deleted
+
+$ kubectl delete svc guestbook-svc 
+service "guestbook-svc" deleted
+
+$ kubectl create -f guestbook-app.yml 
+pod/guestbook-pod created
+service/guestbook-svc created
+
+$ kubectl get pods
+NAME            READY     STATUS    RESTARTS   AGE
+guestbook-pod   2/2       Running   1          46s
+
+$ minikube service list
+|-------------|----------------------|-----------------------------|
+|  NAMESPACE  |         NAME         |             URL             |
+|-------------|----------------------|-----------------------------|
+| default     | guestbook-svc        | http://192.168.99.100:30982 |
+| default     | kubernetes           | No node port                |
+| kube-system | kube-dns             | No node port                |
+| kube-system | kubernetes-dashboard | http://192.168.99.100:30000 |
+| kube-system | metrics-server       | No node port                |
+|-------------|----------------------|-----------------------------|
+
+```
+
+
+
+- guestbook pod 및 svc 를 재배포 했지만, 이전에 데이터는 pv 에 남아 삭제되지 않고 계속해서 사용가능함을 확인
+
+![1534746296325](assets/1534746296325.png)
+
+```shell
+# LAB 환경 초기화 후 종료
+$ labctl restore
+0%...10%...20%...30%...40%...50%...60%...70%...80%...90%...100%
+Restoring snapshot 'init-status' (01419346-a9c2-4ca6-8375-2e8f12c6762f)
+0%...10%...20%...30%...40%...50%...60%...70%...80%...90%...100%
+Waiting for VM "minikube" to power on...
+VM "minikube" has been successfully started.
+Switched to context "minikube".
+minikube is ready!!
 ```
 
 
@@ -278,4 +475,6 @@ radial/busyboxplus                         curl                71fa7369f437     
 ## References
 
 * https://kubernetes.io/docs/concepts/storage/volumes/
+* https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+* https://kubernetes.io/docs/concepts/storage/storage-classes/
 * https://github.com/kubernetes/minikube/blob/master/docs/persistent_volumes.md
