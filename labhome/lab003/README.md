@@ -197,14 +197,11 @@ Containers:
 ```shell
 # LAB003 디렉토리로 이동
 $ cd ~/labhome/lab003/pv-example
-$ ls -l
-합계 8
--rw-r--r-- 1 jhlee jhlee  104  8월 20 07:05 Dockerfile
-drwxr-xr-x 3 jhlee jhlee 4096  8월 20 07:05 app
 
 # docker cli 명령어가 localhost 가 아니라 minikube 안에 있는 docker 데몬을 바라보도록 환경 설정 변경
 $ eval $(minikube docker-env)
 
+# 호스트에서 guesbook-python 을 빌드. 이후 결과물은 로컬이 아니라 minikube 안에 저장됩니다.
 $ docker build -t guestbook-python:v1 .
 Sending build context to Docker daemon   7.68kB
 Step 1/5 : FROM python:2-alpine
@@ -257,6 +254,7 @@ Removing intermediate container a99befed26de
 Successfully built 26dc640794e6
 Successfully tagged guestbook-python:v1
 
+# docker images 명령어로 빌드된 결과 이미지를 확인합니다. 이때 나오는 목록은 로컬 호스트가 아닌 minikube 안에 저장된 image 목록이 출력됩니다.
 $ docker images
 REPOSITORY                                 TAG                 IMAGE ID            CREATED             SIZE
 guestbook-python                           v1                  26dc640794e6        11 seconds ago      71.6MB

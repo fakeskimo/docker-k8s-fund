@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: hello-app-rs
+  labels:
+    app: hello-app
+    tier: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hello-app
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: hello-app
+        tier: frontend
+    spec:
+      containers:
+      - name: hello-app
+        image: gcr.io/google-samples/hello-app:1.0
+        ports:
+          - containerPort: 8080
