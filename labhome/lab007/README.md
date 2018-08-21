@@ -45,6 +45,6 @@ Please use corret option [restore|rebuild]
 * 전체 애플리케이션은 guestbook web tier 와 redis db tier 로 2개의 층으로 구성되어 있습니다.
 * guestbook 컨테이너는 ~/labhome/lab007/guestbook 경로에 있는 애플리케이션 파일들을 docker image 로 빌드하여 사용하며 tag 는 guestbook:v3 를 붙여 구분해 주십시오.
 * guestbook tier 는 최소 3개의 pod 가 구동 중이어야 하며, 50% CPU 사용율을 목표로 최대 12개까지 Autoscaling 이 가능하여야 합니다.
-* redis tier 는 하나의 pod 로 구성되어 있으며, redis 의 /data 경로는 PVC 를 통해 받은 50 GiB 크기의 볼륨을 저장공간으로 사용하여야 합니다.
+* redis tier 는 하나의 pod 로 구성되어 있으며, redis 의 /data 경로는 PVC 를 통해 받은 5 GiB 크기의 볼륨을 저장공간으로 사용하여야 합니다.
 * guestbook tier 은 혹시 있을 수 있는 redis 증축을 대비하여 redis tier 에 접근하기 위하여, Redis 서비스를 거쳐서 접근합니다.
 * 외부 사용자는 guestbook 서비스를 이용해 접근하며, 이때 guestbook 서비스는 hostPort 를 사용하여 로컬 머신에서 직접 접근할 수 있도록 합니다.
