@@ -324,7 +324,42 @@ hello-app-deploy-77d8794f48   0         0         0         32m
 
 ### Rollback
 
-```
+```shell
+# 만약 애플리케이션이 Deployment 로 배포되었다면, 새로운 버전에서 문제 발생시 이전 버전으로 쉽게 Rollback 할 수 있습니다.
+
+# 먼저 지금까지 배포된 이력을 아래와 같이 확인하실 수 있습니다.
+
+$ kubectl rollout history  deploy/hello-app-deploy
+deployments "hello-app-deploy"
+REVISION  CHANGE-CAUSE
+1         <none>
+2         <none>
+
+$ kubectl rollout undo deploy/hello-app-deploy
+deployment.extensions/hello-app-deploy
+
+$ kubectl rollout status deploy/hello-app-deploy
+deployment "hello-app-deploy" successfully rolled out
+
+$ kubectl rollout history  deploy/hello-app-deploy
+deployments "hello-app-deploy"
+REVISION  CHANGE-CAUSE
+2         <none>
+3         <none>
+
+# 롤백된 애플리케이션 내용 확인을 위해 현재 Service Cluster-IP 확인
+$ kubectl get svc
+NAME            TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+hello-app-svc   ClusterIP   10.99.231.19   <none>        80/TCP    8m
+kubernetes      ClusterIP   10.96.0.1      <none>        443/TCP   24m
+
+# Curl 명령어를 통해 v1 으로 롤백되었음을 확인합니다.
+$ kubectl run busyboxplus --image=radial/busyboxplus:curl -i --tty --rm
+If you don't see a command prompt, try pressing enter.
+[ root@busyboxplus-5697648fcc-h54fv:/ ]$ curl 10.99.231.19
+Hello, world!
+Version: 1.0.0
+Hostname: hello-app-deploy-77d8794f48-jl6n6
 
 ```
 
