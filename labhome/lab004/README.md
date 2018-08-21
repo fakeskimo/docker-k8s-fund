@@ -113,12 +113,15 @@ spec:
         - key: redis-config
           path: redis.conf
 
+# Redis 서버 Pod 배포
+$ kubectl create -f redis-pod.yml 
+pod/redis created
 
 $ kubectl get pod
 NAME      READY     STATUS    RESTARTS   AGE
 redis     1/1       Running   0          4m
 
-
+# 현재 배포된 Redis pod 에 터미널을 붙여 Redis 설정 내용 확인
 $ kubectl exec -it redis redis-cli
 127.0.0.1:6379> CONFIG GET maxmemory
 1) "maxmemory"

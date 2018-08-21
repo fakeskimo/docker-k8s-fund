@@ -101,6 +101,11 @@ Please use corret option [restore|rebuild]
 - 사용자가 직접 replica 개수 변경하는 매뉴얼 스케일링
 
 ```shell
+# 스케일링 테스트를 위한 
+
+$ kubectl run hpa-example --image=k8s.gcr.io/hpa-example --requests=cpu=200m --expose --port=80
+
+
 
 ```
 
